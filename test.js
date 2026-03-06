@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         New Userscript
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      3.0
 // @description  try to take over the world!
 // @author       You
 // @match        https://*/*
@@ -13,6 +13,6 @@
 
 (function() {
     'use strict';
-    console.log('hello hzlop');
+    console.log('hello hzlop world');
     // Your code here...
 })();
