@@ -1,14 +1,17 @@
 // ==UserScript==
-// @name         查询连续三日增长的款式
+// @name         推送插件
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      3.0
 // @match        https://*.erp321.com/*
 // @grant        GM_xmlhttpRequest
 // @connect      ivxubxfk0fm.feishu.cn
 // @run-at       document-end
+// @updateURL    https://raw.githubusercontent.com/hzlop/-/main/运营部/一组/付锐/查询连续三日增长的款式/index.js
+// @downloadURL  https://raw.githubusercontent.com/hzlop/-/main/运营部/一组/付锐/查询连续三日增长的款式/index.js
 // ==/UserScript==
 
 (function () {
+    // 已上传到Git仓库
     // ─── 常量 & 配置 ────────────────────────────────────────────────────────────
 
     const SHOPS = {
@@ -162,8 +165,8 @@
 
     /** 逐条发送表格数据到飞书多维表格 */
     async function sendXlsxToFeishu(rows) {
-        return new Promise((resolve, reject) => {
-            for (let i = 0; i < rows.length; i++) {
+        for (let i = 0; i < rows.length; i++) {
+            await new Promise((resolve, reject) => {
                 try {
                     GM_xmlhttpRequest({
                         method:  'POST',
@@ -176,17 +179,19 @@
                             }
                             wordsEl.innerHTML = `已经发送给表格${i + 1}/${rows.length}条`;
                             await randomDelay(300, 500);
+                            resolve(true);
                         },
-                        onerror: err => console.error('[插件] GM_xmlhttpRequest 错误:', err, rows[i]),
+                        onerror: err => {
+                            console.error('[插件] GM_xmlhttpRequest 错误:', err, rows[i]);
+                            reject(err);
+                        },
                     });
                 } catch (e) {
                     console.log('[插件] 调用 GM_xmlhttpRequest 失败', e);
-                    reject(false);
-                    return;
+                    reject(e);
                 }
-            }
-            resolve(true);
-        });
+            });
+        }
     }
 
     // ─── 数据拉取 ────────────────────────────────────────────────────────────────
