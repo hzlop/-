@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         售后自用插件
 // @namespace    http://tampermonkey.net/
-// @version      7.1
+// @version      7.2
 // @description  重构版本
 // @author       达摩
 // @match        https://www.erp321.com/*
@@ -1607,7 +1607,7 @@
             // 清空商品款式选项
             this.elements.productStyleGroup.innerHTML = '';
 
-            this.isOid = false;
+            this.isOid = true;
         }
 
         collectData() {
