@@ -8,7 +8,8 @@
 // @match        https://w.erp321.com/*
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
 // @grant        GM_xmlhttpRequest
-// @updateURL    https://
+// @updateURL    https://raw.githubusercontent.com/hzlop/-/main/客服部/售后组/售后自用插件/index.js
+// @downloadURL  https://raw.githubusercontent.com/hzlop/-/main/客服部/售后组/售后自用插件/index.js
 // @run-at       document-end
 // ==/UserScript==
 
