@@ -8,6 +8,7 @@
 // @match        https://w.erp321.com/*
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
 // @grant        GM_xmlhttpRequest
+// @updateURL    https://
 // @run-at       document-end
 // ==/UserScript==
 
