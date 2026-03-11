@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         采购表格辅助插件
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @match        https://*.erp321.com/*
 // @grant        GM_xmlhttpRequest
 // @connect      ivxubxfk0fm.feishu.cn
@@ -210,7 +210,7 @@
      */
     function buildOrderFormData(callbackParam) {
         const fields = {
-            __VIEWSTATE: "/wEPDwUKLTk3OTc4NTg5MWRkAAjb5TI3+T+7YJtzHDn1bxVwpEg=",
+            __VIEWSTATE: "/wEPDwULLTE5NDE3OTc0MzhkZFljjZ+j39FvCUEtOmvLM52MuNDh",
             __VIEWSTATEGENERATOR: "C8154B07",
             insurePrice: "", _jt_page_count_enabled: "",
             _jt_page_increament_enabled: "true", _jt_page_increament_page_mode: "",
