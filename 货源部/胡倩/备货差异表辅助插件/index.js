@@ -7,8 +7,6 @@
 // @connect      ivxubxfk0fm.feishu.cn
 // @connect      apiweb.erp321.com
 // @require      https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js
-// @updateURL    https://raw.githubusercontent.com/hzlop/-/main/货源部/胡倩/备货差异表辅助插件/index.js
-// @downloadURL  https://raw.githubusercontent.com/hzlop/-/main/货源部/胡倩/备货差异表辅助插件/index.js
 // ==/UserScript==
 
 (function() {
@@ -468,7 +466,21 @@
                 let items = clipboardText.split('\n').filter(i => i);
                 items.forEach(item =>{
                     let row = item.split('\t').filter(i => i);
-                    cool_data[row[0]] = [Number(row[1].trim()),Number(row[2].trim()),Number(row[3].trim()),Number(row[4].trim()),Number(row[5].trim())];
+                    if(row[0] in cool_data){
+                        let n1 = Number(row[1].trim());
+                        let n2 = Number(row[2].trim());
+                        let n3 = Number(row[3].trim());
+                        let n4 = Number(row[4].trim());
+                        let n5 = Number(row[5].trim());
+                        let c1 = cool_data[row[0]][0];
+                        let c2 = cool_data[row[0]][1];
+                        let c3 = cool_data[row[0]][2];
+                        let c4 = cool_data[row[0]][3];
+                        let c5 = cool_data[row[0]][4];
+                        cool_data[row[0]] = [n1 + c1,n2 + c2,n3 + c3,n4 + c4,n5 + c5];
+                    }else {
+                        cool_data[row[0]] = [Number(row[1].trim()),Number(row[2].trim()),Number(row[3].trim()),Number(row[4].trim()),Number(row[5].trim())];
+                    }
                 })
 
                 let text = Object.keys(cool_data);
