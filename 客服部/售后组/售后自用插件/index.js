@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         售后自用插件
 // @namespace    http://tampermonkey.net/
-// @version      7.2
+// @version      7.3
 // @description  重构版本
 // @author       达摩
 // @match        https://www.erp321.com/*
@@ -216,17 +216,7 @@
             return formData;
         }
 
-        static async GetOrderDataByOrder(Oid) {
-            if (!Oid || Oid.length !== 8 || typeof Oid != 'string' || !(/^-?\d+$/.test(Oid))) {
-                console.error("请检查内部单号：",Oid);
-                return Promise.reject('订单号不正确');
-            }
-            const timestamp = new Date().getTime();
-            const url = `https://www.erp321.com/app/order/order/list.aspx?_c=jst-epaas&ts___=${timestamp}&am___=LoadDataToJSON`;
-            const callbackParam = {
-                "Method": "LoadDataToJSON",
-                "Args": ["1", `[{\"k\":\"o_id\",\"v\":\"${Oid}\",\"c\":\"@=\"}]`, "{}"]
-            };
+        static async Fetch_data(url, callbackParam){
             const formData = Utils.creakeSearchParams(callbackParam, true);
             const headers = {
                 "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -257,10 +247,25 @@
                     }
                 })
                 .catch(error => {
-                    console.error("订单数据获取失败 data:", error);
+                    console.error("数据获取失败 data:", error);
                     resolve(null);
                 });
             });
+        };
+
+        static async GetOrderDataByOrder(Oid) {
+            if (!Oid || Oid.length !== 8 || typeof Oid != 'string' || !(/^-?\d+$/.test(Oid))) {
+                console.error("请检查内部单号：",Oid);
+                return Promise.reject('订单号不正确');
+            }
+            const timestamp = new Date().getTime();
+            const url = `https://www.erp321.com/app/order/order/list.aspx?_c=jst-epaas&ts___=${timestamp}&am___=LoadDataToJSON`;
+            const callbackParam = {
+                "Method": "LoadDataToJSON",
+                "Args": ["1", `[{\"k\":\"o_id\",\"v\":\"${Oid}\",\"c\":\"@=\"}]`, "{}"]
+            }
+            const datas = await this.Fetch_data(url,callbackParam)
+            return datas;
         }
 
         static async SaveAppendRemarks(flag=null,remark,o_id,append = true) {
@@ -293,8 +298,25 @@
                         console.error("备注保存失败:", error);
                         resolve(false);
                     }
-                })});
-    };
+                })
+            });
+        };
+
+        static async ReloadOrdersWithFlds(Oid){
+            if (!Oid || Oid.length !== 8 || typeof Oid != 'string' || !(/^-?\d+$/.test(Oid))) {
+                console.error("请检查内部单号：",Oid);
+                return Promise.reject('订单号不正确');
+            }
+            const timestamp = new Date().getTime();;
+            const url = `https://www.erp321.com/app/order/order/list.aspx?_c=jst-epaas&ts___=${timestamp}&am___=ReloadOrdersWithFlds`;
+            const callbackParam = {
+                "Method":"ReloadOrdersWithFlds",
+                "Args":[Oid,"co_id,o_id,remark,node,seller_flag"],
+                "CallControl":"{page}"
+            };
+            const datas = await this.Fetch_data(url,callbackParam);
+            return datas;
+        };
     }
 
 
@@ -343,7 +365,7 @@
             let productList = [];
 
             const items = datas.items;
-            
+
             items.forEach(item => {
                 productList.push({
                     productStyle: item.i_id,
@@ -369,7 +391,7 @@
 
             return {
                 orderId: datas.so_id,
-                Oid:datas.o_id,
+                Oid:String(datas.o_id),
                 shopName: datas.shop_name,
                 productList: productList,
                 productStyleList: productStyleList,
@@ -451,12 +473,13 @@
                 data,
                 (response) => {
                     Utils.showToast(`${CONFIG.MESSAGES.SUCCESS}\n响应:${response}`);
-                    
+
                     if (shouldAppendRemarks && this.Oid) {
                         const remarkText = this.generateAppendRemarkText(data);
                         if (remarkText) {
                             Utils.SaveAppendRemarks(2, remarkText, this.Oid, true)
                                 .then(() => {
+                                    Utils.ReloadOrdersWithFlds(this.Oid);
                                     this.hide();
                                 });
                         } else {
@@ -901,7 +924,7 @@
             if (!data.krui || !data.text) {
                 return null;
             }
-            return `[${data.krui}]${data.text}`;
+            return `[${data.krui}]${data.text};`;
         }
     }
 
@@ -1109,7 +1132,7 @@
                 return null;
             }
             const amount = parseFloat(data.q) || 0;
-            return `[${data.name}]挽单${amount}元`;
+            return `[${data.name}]挽单${amount}元;`;
         }
     }
 
@@ -1499,7 +1522,7 @@
             if (!data.krui || !data.qkkl || !data.zerf) {
                 return null;
             }
-            return `此单错发了[${data.krui}]，原因：[${data.qkkl}]，责任人：[${data.zerf}]`;
+            return `此单错发了[${data.krui}]，原因：[${data.qkkl}]，责任人：[${data.zerf}];`;
         }
     }
 
@@ -1634,9 +1657,7 @@
                 Utils.showToast(CONFIG.MESSAGES.NO_ORDER_ID);
                 return null;
             }
-
             return {
-
                 os_id: os_id,
                 krui: productStyle,
                 vekz: vekz,
@@ -1645,6 +1666,19 @@
                 type: type
             };
         }
+
+        // 获取追加备注复选框
+        getAppendRemarksCheckbox() {
+            return document.getElementById('custom-panel-append-remarks');
+        }
+
+        generateAppendRemarkText(data) {
+            const vekz = this.panel.querySelector('input[name="siyu-vekz"]:checked')?.value || '';
+            if(vekz == "半价" || vekz == "清仓"){
+                return (vekz + ';');
+            };
+        }
+
     }
 
     // ==================== 快递丢件面板 ====================
@@ -1756,7 +1790,7 @@
 
         // 生成追加备注文本 - 格式：快递丢件
         generateAppendRemarkText(data) {
-            return '快递丢件';
+            return '快递丢件;';
         }
     }
 
@@ -2333,13 +2367,13 @@
                     </div>
 
                     <div class="form-section">
-                            <div class="form-item">
-                                <label>追加备注:</label>
-                                <div class="checkbox-item">
-                                    <input type="checkbox" id="custom-panel-append-remarks" checked>
-                                    <label for="custom-panel-append-remarks">追加备注</label>
-                                </div>
+                        <div class="form-item">
+                            <label>追加备注:</label>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="custom-panel-append-remarks" checked>
+                                <label for="custom-panel-append-remarks">追加备注</label>
                             </div>
+                        </div>
                     </div>
                     <div class="btn-group">
                         <button class="btn-send" id="panel-send-btn">发送到售后表</button>
@@ -2439,13 +2473,13 @@
                     </div>
 
                     <div class="form-section">
-                            <div class="form-item">
-                                <label>追加备注:</label>
-                                <div class="checkbox-item">
-                                    <input type="checkbox" id="wandan-append-remarks" checked>
-                                    <label for="wandan-append-remarks">追加备注</label>
-                                </div>
+                        <div class="form-item">
+                            <label>追加备注:</label>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="wandan-append-remarks" checked>
+                                <label for="wandan-append-remarks">追加备注</label>
                             </div>
+                        </div>
                     </div>
 
                     <div class="btn-group">
@@ -2547,13 +2581,13 @@
                     </div>
 
                     <div class="form-section">
-                            <div class="form-item">
-                                <label>追加备注:</label>
-                                <div class="checkbox-item">
-                                    <input type="checkbox" id="cuofa-panel-remarks" checked>
-                                    <label for="cuofa-panel-remarks">追加备注</label>
-                                </div>
+                        <div class="form-item">
+                            <label>追加备注:</label>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="cuofa-panel-remarks" checked>
+                                <label for="cuofa-panel-remarks">追加备注</label>
                             </div>
+                        </div>
                     </div>
 
                     <div class="btn-group">
@@ -2628,6 +2662,17 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="form-section">
+                        <div class="form-item">
+                            <label>追加备注:</label>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="siyu-panel-append-remarks" checked>
+                                <label for="siyu-panel-append-remarks">追加备注</label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="btn-group">
                         <button class="btn-send" id="siyu-panel-send-btn">发送到私域表格</button>
                     </div>
